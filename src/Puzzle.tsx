@@ -1,5 +1,5 @@
 import { solve, nextMove } from "./solver.ts";
-import React, { useState } from "react";
+import  { useState } from "react";
 export function Puzzle({ _grid }) {
   const [grid, setGrid] = useState([]);
   if (!grid.length) {

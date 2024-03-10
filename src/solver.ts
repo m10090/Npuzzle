@@ -1,37 +1,27 @@
 // Description: This file contains the main logic for solving the N puzzle.
 const _stk = [];
 let Grid: string[][] = [];
+let mx = 0;
+export let userCost: 'manhattan' | 'manhattan3' | 'misplaced';
 export function solve(grid: string[][]) {
   Grid = [...grid];
-  console.log(grid);
   interface pqValues {
     cost: number;
     grid: string[][];
     g: number;
-    stk: any[];
+    stk: [[number, number], [number, number]][];
   }
+  const getCost = costFunctions[userCost];
   const isSolved = function (grid: string[][]) {
     const cost = getCost(grid);
-    console.log(cost);
     return cost === 0;
   };
-  const getCost = function (grid: string[][]) {
-    let cost = 0;
-    grid.forEach((row, i) => {
-      row.forEach((cell, j) => {
-        if (cell) {
-          const value = parseInt(cell) - 1;
-          const distant =
-            Math.abs(Math.floor(value / grid.length) - i) +
-            Math.abs((value % grid.length) - j);
-          cost += distant;
-        }
-      });
-    });
-    return cost;
-  };
   const pq: pqValues[] = [{ cost: 0, grid, g: 0, stk: [] }];
-  function nextMoves(grid: string[][], g: number, stk: any[]) {
+  function nextMoves(
+    grid: string[][],
+    g: number,
+    stk: [[number, number], [number, number]][],
+  ) {
     for (let i = 0; i < grid.length; i++) {
       for (let j = 0; j < grid.length; j++) {
         if (grid[i][j] === "") {
@@ -111,7 +101,8 @@ export function solve(grid: string[][]) {
       }
     }
   }
-  while (true) {
+  while (pq.length) {
+    mx = Math.max(pq.length, mx);
     const { grid, g, stk } = pq.shift() as pqValues;
     nextMoves(grid, g, stk);
     pq.sort(function (a, b) {
@@ -119,16 +110,66 @@ export function solve(grid: string[][]) {
     });
     if (isSolved(grid)) {
       _stk.push(...stk);
-      return;
+      break;
     }
   }
+  console.log(mx);
 }
 export function nextMove() {
-  console.log(_stk);
   const move = _stk.shift();
   const tmp = Grid[move[0][0]][move[0][1]];
-  console.log(tmp)
   Grid[move[0][0]][move[0][1]] = Grid[move[1][0]][move[1][1]];
   Grid[move[1][0]][move[1][1]] = tmp;
   return [...Grid];
+}
+const costFunctions = {
+  manhattan3: function (grid: string[][]) {
+    let cost = 0;
+    grid.forEach((row, i) => {
+      row.forEach((cell, j) => {
+        if (cell) {
+          const value = parseInt(cell) - 1;
+          const distant =
+            Math.abs(Math.floor(value / grid.length) - i) +
+            Math.abs((value % grid.length) - j);
+          cost += distant;
+        }
+      });
+    });
+    // don't work 
+    return cost/3;
+  },
+  manhattan: function (grid: string[][]) {
+    let cost = 0;
+    grid.forEach((row, i) => {
+      row.forEach((cell, j) => {
+        if (cell) {
+          const value = parseInt(cell) - 1;
+          const distant =
+            Math.abs(Math.floor(value / grid.length) - i) +
+            Math.abs((value % grid.length) - j);
+          cost += distant;
+        }
+      });
+    });
+    return cost;
+  },
+  misplaced: function (grid: string[][]) {
+    let cost = 0;
+    grid.forEach((row, i) => {
+      row.forEach((cell, j) => {
+        if (cell) {
+          const value = parseInt(cell);
+          if (value !== i * grid.length + j + 1) {
+            cost++;
+          }
+        }
+      });
+    });
+    return cost;
+  },
+} as const;
+export function getUserCost(method:string) {
+  // @ts-expect-error userCost is a string
+  userCost = method;
 }
